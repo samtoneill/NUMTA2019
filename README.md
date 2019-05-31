@@ -1,2 +1,4 @@
 # NUMTA2019
-Paper and code for the NUMTA 2019 conference
+The following repository contains code and the LNCS paper that was presented at the NUMTA 2019 conference
+
+
