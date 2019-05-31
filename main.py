@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from agents import *
 from fw_tap import *
 from bandits import *
+import time
 
 G = nx.grid_2d_graph(4,4,periodic=False) 
 G = nx.DiGraph(G)
@@ -85,6 +86,8 @@ for seed in range(1,2):
     od_rewards, edge_info = algorithm_loop(GBanditGame, ods, gammas=gammas)
     results_ewfull.append((od_rewards, edge_info, min_od_cost, equi_total, equi_beckmann))
 
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewsemi]),axis=0), axis=1), label='EW-SB')
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewfull]),axis=0), axis=1), label='EW-B')
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_egreedysemi]),axis=0), axis=1), label=r'$\epsilon$G-SB')
@@ -93,8 +96,8 @@ plt.semilogy([0,GBanditGame.T], [np.mean(np.array([equi_total for od_rewards, ed
 plt.xlabel('Round (t)', fontsize=18)
 plt.ylabel('Total Cost', fontsize=18)
 plt.legend()
-plt.savefig('logtotal.eps', format='eps')
-plt.savefig('logtotal.png', format='png')
+plt.savefig('output/logtotal_{}.eps'.format(timestr), format='eps')
+plt.savefig('output/logtotal_{}.png'.format(timestr), format='png')
 
 fig, ax = plt.subplots()
 plt.bar(range(np.sum(dem)), np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewsemi]),axis=0)[0])
@@ -106,8 +109,8 @@ plt.xlabel('Player $i$', fontsize=18)
 
 ylim=plt.ylim()
 
-plt.savefig('equi_0.eps', format='eps')
-plt.savefig('equi_0.png', format='png')
+plt.savefig('output/equi_0_{}.eps'.format(timestr), format='eps')
+plt.savefig('output/equi_0_{}.png'.format(timestr), format='png')
 
 fig, ax = plt.subplots()
 plt.bar(range(np.sum(dem)), np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewsemi]),axis=0)[-1])
@@ -119,5 +122,5 @@ plt.xlabel('Player $i$', fontsize=18)
   
 plt.ylim(ylim)
   
-plt.savefig('equi_T.eps', format='eps')
-plt.savefig('equi_T.png', format='png')
+plt.savefig('output/equi_T_{}.eps'.format(timestr), format='eps')
+plt.savefig('output/equi_T_{}.png'.format(timestr), format='png')
