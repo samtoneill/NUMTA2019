@@ -1,8 +1,17 @@
+''' 
+Class implementations of the following agents.
+
+* Exponential Weights with Semi-bandit Feedback
+* Exponential Weights with Bandit Feedback
+* e-Greedy with Semi-bandit Feedback
+* e-Greedy with Bandit Feedback
+
+'''
+
 import numpy as np
 from itertools import islice
 
 class EWSemiAgent:
-  
   def __init__(self, env, actions):
     self.env = env
     self.actions = actions
@@ -145,7 +154,6 @@ class EGreedySemiAgent:
     self.W.append(W)
 
 class EGreedyFullAgent:
-  
   def __init__(self, env, actions,epsilon=0.1):
     self.env = env
     self.actions = actions
@@ -201,7 +209,6 @@ def algorithm_loop(GBanditGame, ods, gammas=None, epsilons=None):
           GBanditGame.play(agent.choose_action())
         else:
           GBanditGame.play(agent.choose_action(epsilon=epsilons[GBanditGame.t]))
-        
 
     edge_info.append([(d['id'],np.float(d['weight']),np.float(d['bandit'].no_pulls)) for (u,v,d) in sorted(GBanditGame.G.edges(data=True))])
 
@@ -219,7 +226,6 @@ def algorithm_loop(GBanditGame, ods, gammas=None, epsilons=None):
           agent.update_weights()
         else:
           agent.update_weights(gamma=gammas[GBanditGame.t])
-    
 
     done = GBanditGame.step()
     if done:

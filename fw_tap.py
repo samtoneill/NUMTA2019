@@ -1,3 +1,9 @@
+'''
+Implementation of Frank Wolfe Method for TAP
+
+See Sheffi 1985
+'''
+
 from time import sleep
 import numpy as np
 import networkx as nx
@@ -5,46 +11,44 @@ from scipy.sparse import csr_matrix
 from copy import copy
 from itertools import islice
 
-def link_cost(G,x):
-    [u,v,d] = [list(t) for t in zip(*list(sorted(G.edges(data=True))))]
-    return list(map(lambda u, v, d, x: d['a'] + d['b']*(x/d['c'])**d['n'], u,v,d,x))
-
+# potential function for the 
 def beckmann(G, x):
     [u,v,d] = [list(t) for t in zip(*list(sorted(G.edges(data=True))))]
     return sum(list(map(lambda u, v, d, x: x*(d['a'] + (d['b']*(x/d['c'])**d['n'])/(d['n']+1)), u,v,d,x)))
-  
-def total(G,x):
-    [u,v,d] = [list(t) for t in zip(*list(sorted(G.edges(data=True))))]
-    return sum(list(map(lambda u, v, d, x: x*(d['a'] + (d['b']*(x/d['c'])**d['n'])), u,v,d,x)))
 
+def get_np_array_from_edge_attribute(G, name):
+    return np.array([value for (key, value) in sorted(nx.get_edge_attributes(G, name).items())])
+  
 def label_edges_with_id(G):
     for index, (u,v) in enumerate(sorted(G.edges(), key= lambda edge: (edge[0], edge[1]))):
         G[u][v]['id'] = index
 
-def get_np_array_from_edge_attribute(G, name):
-    return np.array([value for (key, value) in sorted(nx.get_edge_attributes(G, name).items())])
+def link_cost(G,x):
+    [u,v,d] = [list(t) for t in zip(*list(sorted(G.edges(data=True))))]
+    return list(map(lambda u, v, d, x: d['a'] + d['b']*(x/d['c'])**d['n'], u,v,d,x))
+
+def total(G,x):
+    [u,v,d] = [list(t) for t in zip(*list(sorted(G.edges(data=True))))]
+    return sum(list(map(lambda u, v, d, x: x*(d['a'] + (d['b']*(x/d['c'])**d['n'])), u,v,d,x)))
 
 def update_edge_attribute(G, name, vector):
     d = dict(zip(sorted(G.edges()), vector))
     nx.set_edge_attributes(G, d, name)
 
+# perform an all or nothing assignment on the network
 def _all_or_nothing(G, od, paths):
     y = np.zeros(len(G.edges())) 
     od = od.tocoo()
     # for demand (d) for s and t
     for s,t,d in (zip(od.row, od.col, od.data)):
-        #print (s,t,d)
         path = nx.shortest_path(G, s, t, weight='weight')
-        #print(path)
         if (s,t) in paths.keys():
             if not path in paths[(s,t)]:
                 paths[(s,t)].append(path)
         else:
             paths[(s,t)] = [path]
-        #print(path)
         for u,v in zip(path[:-1], path[1:]):
             edge_id = G[u][v]['id']
-            #print(edge_id)
             y[edge_id] += d
     return (y, paths)
 
@@ -54,7 +58,6 @@ def _line_search(G, x, y, func, ls_e):
     while True:
         alpha = (p+q)/2.0
         D_alpha = sum((y-x)*link_cost(G, x + alpha*(y-x)))
-        #print( D_alpha)
         if D_alpha <= 0:
             p = alpha
         else:
@@ -68,8 +71,8 @@ def _line_search(G, x, y, func, ls_e):
 def weighted_path_cost(G, path):
     return sum([G[u][v]['weight'] for (u,v) in zip(path[:-1], path[1:])])
 
+# main loop for method
 def fw(G, od, max_iter=10, conv_e=0.01, ls_e=0.05, func=link_cost):
-    lbd = 0
     label_edges_with_id(G)
     x = np.zeros(len(G.edges()))
     update_edge_attribute(G, 'x', x)
@@ -103,7 +106,6 @@ def fw(G, od, max_iter=10, conv_e=0.01, ls_e=0.05, func=link_cost):
 
     return G, x, paths
 
-''' helper function for getting k paths '''
-
+#helper function for getting k paths
 def k_shortest_paths(G, source, target, k, weight=None):
     return list(islice(nx.shortest_simple_paths(G, source, target, weight=weight), k))

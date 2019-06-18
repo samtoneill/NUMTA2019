@@ -5,38 +5,39 @@ from fw_tap import *
 from bandits import *
 import time
 
+# Create the network
 G = nx.grid_2d_graph(4,4,periodic=False) 
 G = nx.DiGraph(G)
 G = nx.convert_node_labels_to_integers(G)
 pos = nx.spring_layout(G, iterations=100)
-
 label_edges_with_id(G)
 
+# Create an instance of the Bandit Game
 GBanditGame = GraphBPRBanditGame(G, T =10)
 GBanditGame.seed(seed=2)
 GBanditGame.reset()
 
+# Define the (origin, destination) pairs and the demand to be routed
 ori = [0,2,3,7]
 des = [15,13,12,8]
 dem = [75,50,75,50]
 
-
+# lists to store results
 results_egreedysemi = []
 results_egreedyfull = []
 results_ewsemi = []
 results_ewfull = []
 min_od_costs = []
 
-for seed in range(1,2):
+# Main loop - Generates a new game based on a given numpy seed.
+for seed in range(1,3):
   print('Seed = {}'.format(seed))
   GBanditGame.seed(seed=seed)
   GBanditGame.reset()
 
+  # solve with Frank Wolfe for benchmarking
   od = csr_matrix((dem, (ori, des)))
-
   G_FW, x, paths = fw(GBanditGame.G, od, max_iter=400)
-
-  
   min_od_cost = []
   for (u,v), value in paths.items():
       path_costs = []
@@ -48,13 +49,14 @@ for seed in range(1,2):
   equi_total = total(GBanditGame.G,x)
   min_od_costs.append(min_od_cost)
 
-  
-  
+  # number of allowed paths per agent  
   k = 10
+  # hyperparameters for EW and e-Greedy algorithms
   alpha = 4
   epsilon = .1
     
-  for i in range(2):
+  # Run algorithms and store results for a given number of iterations (i)
+  for i in range(10):
     print('Iteration = {}'.format(i))
     
     # Reset game with given seed and run episode for e-greedy semi-bandit
@@ -88,6 +90,7 @@ for seed in range(1,2):
 
 timestr = time.strftime("%Y%m%d-%H%M%S")
 
+# Code for various plots
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewsemi]),axis=0), axis=1), label='EW-SB')
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_ewfull]),axis=0), axis=1), label='EW-B')
 plt.semilogy(np.sum(np.mean(np.array([od_rewards for od_rewards, edge_info, min_od_cost,equi_total, equi_beckmann in results_egreedysemi]),axis=0), axis=1), label=r'$\epsilon$G-SB')
